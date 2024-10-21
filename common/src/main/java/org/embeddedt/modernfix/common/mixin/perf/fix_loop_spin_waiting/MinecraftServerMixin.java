@@ -1,6 +1,7 @@
 package org.embeddedt.modernfix.common.mixin.perf.fix_loop_spin_waiting;
 
-import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.Util;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
@@ -20,14 +21,14 @@ public abstract class MinecraftServerMixin {
     @Unique
     private boolean mfix$isWaitingForNextTick = false;
 
-    @WrapWithCondition(
+    @WrapOperation(
             method = "waitUntilNextTick",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;managedBlock(Ljava/util/function/BooleanSupplier;)V")
     )
-    private boolean manageBlockWithCondition(MinecraftServer instance, BooleanSupplier booleanSupplier) {
+    private void managedBlock(MinecraftServer instance, BooleanSupplier isDone, Operation<Void> original) {
         try {
             this.mfix$isWaitingForNextTick = true;
-            return true;
+            original.call(instance, isDone);
         } finally {
             this.mfix$isWaitingForNextTick = false;
         }
