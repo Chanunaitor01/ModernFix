@@ -1,7 +1,7 @@
-package org.embeddedt.modernfix.fabric.mixin.core;
+package org.embeddedt.modernfix.common.mixin.core;
 
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import org.embeddedt.modernfix.ModernFixClientFabric;
+import org.embeddedt.modernfix.ModernFixClient;
 import org.embeddedt.modernfix.annotation.ClientOnlyMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientPlayNetHandlerMixin {
     @Inject(method = "handleUpdateRecipes", at = @At("RETURN"))
     private void signalRecipes(CallbackInfo ci) {
-        ModernFixClientFabric.commonMod.onRecipesUpdated();
+        ModernFixClient.INSTANCE.onRecipesUpdated();
     }
 }

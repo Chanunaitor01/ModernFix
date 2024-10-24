@@ -19,7 +19,7 @@ public class DynamicModelCacheTest {
 
     @Test
     public void testCacheFunctions() {
-        BakedModel model = new BuiltInModel(null, null, null, false);
+        BakedModel model = new BuiltInModel(null, null, false);
         DynamicModelCache<Item> cache = new DynamicModelCache(k -> model, true);
         assertEquals(model, cache.get(Items.STONE));
     }

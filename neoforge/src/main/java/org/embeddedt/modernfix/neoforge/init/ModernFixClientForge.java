@@ -13,7 +13,6 @@ import net.neoforged.fml.ModLoadingIssue;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent;
-import net.neoforged.neoforge.client.event.RecipesUpdatedEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -87,7 +86,7 @@ public class ModernFixClientForge {
     public void onDisconnect(LevelEvent.Unload event) {
         if(event.getLevel().isClientSide()) {
             DebugScreenOverlay overlay = Minecraft.getInstance().getDebugOverlay();
-            Minecraft.getInstance().tell(overlay::clearChunkCache);
+            Minecraft.getInstance().execute(overlay::clearChunkCache);
         }
     }
 
@@ -99,11 +98,6 @@ public class ModernFixClientForge {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onRenderTickEnd(RenderFrameEvent.Post event) {
         commonMod.onRenderTickEnd();
-    }
-
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void onRecipes(RecipesUpdatedEvent e) {
-        commonMod.onRecipesUpdated();
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

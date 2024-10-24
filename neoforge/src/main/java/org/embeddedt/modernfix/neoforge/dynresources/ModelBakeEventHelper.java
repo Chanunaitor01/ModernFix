@@ -8,7 +8,7 @@ import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.MissingBlockModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -125,7 +125,7 @@ public class ModelBakeEventHelper {
         if(modIdsToInclude.stream().noneMatch(INCOMPATIBLE_MODS::contains))
             return createWarningRegistry(modId);
         Set<ModelResourceLocation> ourModelLocations = Sets.filter(this.topLevelModelLocations, loc -> modIdsToInclude.contains(loc.id().getNamespace()));
-        BakedModel missingModel = modelRegistry.get(ModelBakery.MISSING_MODEL_VARIANT);
+        BakedModel missingModel = modelRegistry.get(MissingBlockModel.VARIANT);
         return new ForwardingMap<ModelResourceLocation, BakedModel>() {
             @Override
             protected Map<ModelResourceLocation, BakedModel> delegate() {
