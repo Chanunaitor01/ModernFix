@@ -7,7 +7,6 @@ import net.minecraft.server.Bootstrap;
 import org.embeddedt.modernfix.ModernFix;
 
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.atomic.AtomicInteger;
