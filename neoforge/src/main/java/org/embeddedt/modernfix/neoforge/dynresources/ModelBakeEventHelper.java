@@ -34,6 +34,7 @@ public class ModelBakeEventHelper {
             "mekanism",
             "vampirism",
             "elevatorid",
+            "cfm",
             "embers");
     private final Map<ModelResourceLocation, BakedModel> modelRegistry;
     private final Set<ModelResourceLocation> topLevelModelLocations;
