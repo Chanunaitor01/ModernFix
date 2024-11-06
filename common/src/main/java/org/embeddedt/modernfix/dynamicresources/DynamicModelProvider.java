@@ -13,7 +13,6 @@ import net.minecraft.client.resources.model.BlockStateModelLoader;
 import net.minecraft.client.resources.model.MissingBlockModel;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.client.resources.model.SpecialModels;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -39,6 +38,7 @@ import java.util.stream.Collectors;
  * Handles loading models dynamically, rather than at startup time.
  */
 public class DynamicModelProvider {
+    /*
     private final LoadingCache<ResourceLocation, Optional<BlockStateModelLoader.LoadedModels>> loadedStateDefinitions =
             CacheBuilder.newBuilder()
                     .expireAfterAccess(3, TimeUnit.MINUTES)
@@ -200,9 +200,12 @@ public class DynamicModelProvider {
         return this.loadedBakedModels.getUnchecked(location).orElse(this.missingModel);
     }
 
+     */
+
     /**
      * Based on the Mojang impl but with some changes to make it slightly more efficient.
      */
+    /*
     private class DynamicResolver implements UnbakedModel.Resolver {
         private final Set<ResourceLocation> stack = new ObjectOpenHashSet<>(4);
         private final Set<ResourceLocation> resolvedModels = new ObjectOpenHashSet<>();
@@ -233,4 +236,6 @@ public class DynamicModelProvider {
             this.resolvedModels.clear();
         }
     }
+
+     */
 }
