@@ -76,6 +76,8 @@ public abstract class ModelBakeryMixin implements IExtendedModelBakery {
 
     @Shadow @Final public static ModelResourceLocation MISSING_MODEL_VARIANT;
 
+    @Shadow protected abstract void registerModelAndLoadDependencies(ModelResourceLocation modelLocation, UnbakedModel model);
+
     private final Map<ModelResourceLocation, BakedModel> mfix$emulatedBakedRegistry = new DynamicOverridableMap<>(ModelResourceLocation.class, this::loadBakedModelDynamic);
 
     @Override
@@ -94,6 +96,9 @@ public abstract class ModelBakeryMixin implements IExtendedModelBakery {
             }
             if(location.variant().equals("inventory")) {
                 this.loadItemModelAndDependencies(location.id());
+            } else if (location.variant().equals("fabric_resource") || location.variant().equals("standalone")) {
+                UnbakedModel unbakedModel = this.getModel(location.id());
+                this.registerModelAndLoadDependencies(location, unbakedModel);
             } else {
                 ((IBlockStateModelLoader)dynamicLoader).loadSpecificBlock(location);
             }
