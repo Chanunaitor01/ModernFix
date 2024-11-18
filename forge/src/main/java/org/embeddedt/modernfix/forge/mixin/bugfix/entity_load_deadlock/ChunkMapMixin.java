@@ -45,7 +45,7 @@ public class ChunkMapMixin {
             for (ClassInstanceMultiMap<Entity> entitySection : entitySections) {
                 if(entitySection == null)
                     continue;
-                for (Entity entity : entitySection.getAllInstances()) {
+                for (Entity entity : entitySection) {
                     if (!(entity instanceof Player) && !this.level.loadFromChunk(entity)) {
                         if (list == null) {
                             list = Lists.newArrayList(entity);

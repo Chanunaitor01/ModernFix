@@ -10,10 +10,8 @@ accessible class net/minecraft/client/renderer/RenderType$CompositeRenderType
 accessible method net/minecraft/client/renderer/RenderType$CompositeRenderType <init> (Ljava/lang/String;Lcom/mojang/blaze3d/vertex/VertexFormat;IIZZLnet/minecraft/client/renderer/RenderType$CompositeState;)V
 accessible method net/minecraft/nbt/CompoundTag <init> (Ljava/util/Map;)V
 
-accessible class net/minecraft/client/Minecraft$ExperimentalDialogType
-accessible class net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache
+accessible class net/minecraft/world/level/block/state/BlockState$Cache
 accessible class net/minecraft/server/level/ServerChunkCache$MainThreadExecutor
-accessible field net/minecraft/world/level/block/state/BlockBehaviour properties Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
 accessible class net/minecraft/client/renderer/block/model/BlockElementFace$Deserializer
 accessible class net/minecraft/client/renderer/texture/Stitcher$Holder
 accessible field net/minecraft/client/renderer/texture/Stitcher$Holder width I
@@ -24,17 +22,15 @@ accessible class net/minecraft/client/resources/model/ModelBakery$BlockStateDefi
 accessible field net/minecraft/network/syncher/SynchedEntityData itemsById Ljava/util/Map;
 accessible field net/minecraft/network/syncher/SynchedEntityData ENTITY_ID_POOL Ljava/util/Map;
 accessible field net/minecraft/network/syncher/SynchedEntityData lock Ljava/util/concurrent/locks/ReadWriteLock;
-accessible method net/minecraft/Util makeExecutor (Ljava/lang/String;)Ljava/util/concurrent/ExecutorService;
 accessible field net/minecraft/server/level/ChunkMap updatingChunkMap Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
 accessible field net/minecraft/server/level/ChunkMap visibleChunkMap Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
 accessible field net/minecraft/server/level/ChunkMap pendingUnloads Lit/unimi/dsi/fastutil/longs/Long2ObjectLinkedOpenHashMap;
 accessible field net/minecraft/client/Minecraft reserve [B
-accessible method net/minecraft/resources/ResourceKey <init> (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;)V
 accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite <init> (Lnet/minecraft/client/renderer/texture/TextureAtlas;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;IIIIILcom/mojang/blaze3d/platform/NativeImage;)V
 accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;
-accessible field net/minecraft/server/MinecraftServer resources Lnet/minecraft/server/ServerResources;
 accessible field net/minecraft/client/renderer/RenderStateShard name Ljava/lang/String;
 accessible method net/minecraft/client/gui/screens/Screen addButton (Lnet/minecraft/client/gui/components/AbstractWidget;)Lnet/minecraft/client/gui/components/AbstractWidget;
 accessible field net/minecraft/server/packs/resources/SimpleReloadableResourceManager namespacedPacks Ljava/util/Map;
 accessible field net/minecraft/client/renderer/entity/EnderDragonRenderer$DragonModel entity Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;
-accessible method net/minecraft/world/level/block/state/StateDefinition appendPropertyCodec (Lcom/mojang/serialization/MapCodec;Ljava/util/function/Supplier;Ljava/lang/String;Lnet/minecraft/world/level/block/state/properties/Property;)Lcom/mojang/serialization/MapCodec;
+
+accessible field net/minecraft/server/packs/resources/FallbackResourceManager fallbacks Ljava/util/List;

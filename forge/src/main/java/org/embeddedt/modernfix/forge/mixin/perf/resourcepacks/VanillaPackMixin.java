@@ -5,7 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.VanillaPackResources;
+import net.minecraft.server.packs.VanillaPack;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.lang3.tuple.Pair;
 import org.embeddedt.modernfix.FileWalker;
@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
-@Mixin(VanillaPackResources.class)
+@Mixin(VanillaPack.class)
 public class VanillaPackMixin {
     @Shadow @Final private static Map<PackType, FileSystem> JAR_FILESYSTEM_BY_TYPE;
     private static LoadingCache<Pair<Path, Integer>, List<Path>> pathStreamLoadingCache = CacheBuilder.newBuilder()

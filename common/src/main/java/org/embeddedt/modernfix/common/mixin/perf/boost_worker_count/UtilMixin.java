@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(Util.class)
 public class UtilMixin {
-    @ModifyConstant(method = "makeExecutor", constant = @Constant(intValue = 7))
+    @ModifyConstant(method = "makeBackgroundExecutor", constant = @Constant(intValue = 7))
     private static int useHigherThreadCount(int old) {
         String requestedMax = System.getProperty("max.bg.threads");
         if(requestedMax != null) {

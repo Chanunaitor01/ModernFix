@@ -1,7 +1,6 @@
 package org.embeddedt.modernfix.forge.classloading;
 
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.LoadingModList;
@@ -19,8 +18,6 @@ import org.embeddedt.modernfix.util.FileUtil;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -89,27 +86,5 @@ public class ModernFixResourceFinder {
             }
         } else
             throw new UnsupportedOperationException("Unknown ModLocator type: " + locator.getClass().getName());
-    }
-
-    public static Enumeration<URL> findAllURLsForResource(String input) {
-        // fallback to Forge impl for any paths ending in a slash
-        char endChar = input.length() > 0 ? input.charAt(input.length() - 1) : '/';
-        if(endChar == '/' || endChar == '\\') {
-            return LoadingModList.get().findAllURLsForResource(input);
-        }
-        // CachedResourcePath normalizes already
-        Collection<String> urlList = urlsForClass.get(new CachedResourcePath(input));
-        if(!urlList.isEmpty()) {
-            String pathInput = FileUtil.normalize(input);
-            return Iterators.asEnumeration(urlList.stream().map(modId -> {
-                try {
-                    return new URL("modjar://" + modId + "/" + pathInput);
-                } catch(MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-            }).iterator());
-        } else {
-            return Collections.emptyEnumeration();
-        }
     }
 }

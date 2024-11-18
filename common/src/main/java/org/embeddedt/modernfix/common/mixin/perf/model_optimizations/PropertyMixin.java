@@ -1,12 +1,12 @@
 package org.embeddedt.modernfix.common.mixin.perf.model_optimizations;
 
-import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.properties.AbstractProperty;
 import org.embeddedt.modernfix.dedup.IdentifierCaches;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(Property.class)
+@Mixin(AbstractProperty.class)
 public class PropertyMixin {
 
     @Shadow @Mutable
@@ -16,8 +16,8 @@ public class PropertyMixin {
 
     @Shadow @Final private Class clazz;
 
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/block/state/properties/Property;name:Ljava/lang/String;"))
-    private void internName(Property instance, String name) {
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/block/state/properties/AbstractProperty;name:Ljava/lang/String;"))
+    private void internName(AbstractProperty<?> instance, String name) {
         this.name = IdentifierCaches.PROPERTY.deduplicate(name);
     }
     /**
@@ -28,10 +28,10 @@ public class PropertyMixin {
     public boolean equals(Object p_equals_1_) {
         if (this == p_equals_1_) {
             return true;
-        } else if (!(p_equals_1_ instanceof Property)) {
+        } else if (!(p_equals_1_ instanceof AbstractProperty<?>)) {
             return false;
         } else {
-            Property<?> property = (Property)p_equals_1_;
+            AbstractProperty<?> property = (AbstractProperty<?>)p_equals_1_;
             /* reference equality is safe here because of deduplication */
             return this.clazz == property.getValueClass() && this.name == property.getName();
         }

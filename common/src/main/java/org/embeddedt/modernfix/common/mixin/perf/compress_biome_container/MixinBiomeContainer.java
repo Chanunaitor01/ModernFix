@@ -2,8 +2,8 @@ package org.embeddedt.modernfix.common.mixin.perf.compress_biome_container;
 
 import it.unimi.dsi.fastutil.objects.Reference2ShortMap;
 import it.unimi.dsi.fastutil.objects.Reference2ShortOpenHashMap;
+import net.minecraft.core.Registry;
 import net.minecraft.util.BitStorage;
-import net.minecraft.core.IdMap;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.biome.Biome;
@@ -23,32 +23,28 @@ public class MixinBiomeContainer {
 
     @Shadow
     @Final
-    private IdMap<Biome> biomeRegistry;
-
-    @Shadow
-    @Final
     private static int WIDTH_BITS;
 
     private Biome[] palette;
     private BitStorage intArray;
 
-    @Inject(method = "<init>(Lnet/minecraft/core/IdMap;[I)V", at = @At("RETURN"), require = 0)
-    private void reinit1(IdMap p_i241970_1_, int[] p_i241970_2_, CallbackInfo ci) {
+    @Inject(method = "<init>(Lnet/minecraft/network/FriendlyByteBuf;)V", at = @At("RETURN"))
+    private void reinit1(CallbackInfo ci) {
         this.createCompact();
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/core/IdMap;[Lnet/minecraft/world/level/biome/Biome;)V", at = @At("RETURN"))
-    private void reinit2(IdMap p_i241971_1_, Biome[] p_i241971_2_, CallbackInfo ci) {
+    @Inject(method = "<init>([Lnet/minecraft/world/level/biome/Biome;)V", at = @At("RETURN"))
+    private void reinit2(Biome[] p_i241971_2_, CallbackInfo ci) {
         this.createCompact();
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/core/IdMap;Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/biome/BiomeSource;)V", at = @At("RETURN"))
-    private void reinit3(IdMap p_i241968_1_, ChunkPos p_i241968_2_, BiomeSource p_i241968_3_, CallbackInfo ci) {
+    @Inject(method = "<init>(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/biome/BiomeSource;)V", at = @At("RETURN"))
+    private void reinit3(ChunkPos p_i241968_2_, BiomeSource p_i241968_3_, CallbackInfo ci) {
         this.createCompact();
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/core/IdMap;Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/biome/BiomeSource;[I)V", at = @At("RETURN"))
-    private void reinit4(IdMap p_i241969_1_, ChunkPos p_i241969_2_, BiomeSource p_i241969_3_, int[] p_i241969_4_, CallbackInfo ci) {
+    @Inject(method = "<init>(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/biome/BiomeSource;[I)V", at = @At("RETURN"))
+    private void reinit4(ChunkPos p_i241969_2_, BiomeSource p_i241969_3_, int[] p_i241969_4_, CallbackInfo ci) {
         this.createCompact();
     }
 
@@ -127,7 +123,7 @@ public class MixinBiomeContainer {
         int[] array = new int[size];
 
         for(int i = 0; i < size; ++i) {
-            array[i] = this.biomeRegistry.getId(this.palette[this.intArray.get(i)]);
+            array[i] = Registry.BIOME.getId(this.palette[this.intArray.get(i)]);
         }
 
         return array;
@@ -144,5 +140,19 @@ public class MixinBiomeContainer {
         int z = biomeZ & ChunkBiomeContainer.HORIZONTAL_MASK;
 
         return this.palette[this.intArray.get(y << WIDTH_BITS + WIDTH_BITS | z << WIDTH_BITS | x)];
+    }
+
+    /**
+     * @author embeddedt
+     * @reason Reimplement
+     */
+    @Overwrite
+    public ChunkBiomeContainer copy() {
+        int size = this.intArray.getSize();
+        Biome[] biomes = new Biome[size];
+        for(int i = 0; i < size; ++i) {
+            biomes[i] = this.palette[this.intArray.get(i)];
+        }
+        return new ChunkBiomeContainer(biomes);
     }
 }

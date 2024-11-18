@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
 
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin {
-    @ModifyArg(method = "*", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/ServerResources;loadResources(Ljava/util/List;Lnet/minecraft/commands/Commands$CommandSelection;ILjava/util/concurrent/Executor;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"), index = 3)
+    @ModifyArg(method = "updateSelectedPacks", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/ReloadableResourceManager;reload(Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;Ljava/util/List;Ljava/util/concurrent/CompletableFuture;)Ljava/util/concurrent/CompletableFuture;"), index = 1)
     private Executor getReloadExecutor(Executor asyncExecutor) {
         return ModernFix.resourceReloadExecutor();
     }

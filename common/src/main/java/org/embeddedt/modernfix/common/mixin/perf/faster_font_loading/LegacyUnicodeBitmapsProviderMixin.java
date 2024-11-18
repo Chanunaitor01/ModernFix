@@ -24,15 +24,15 @@ import java.util.Map;
 @Mixin(LegacyUnicodeBitmapsProvider.class)
 @ClientOnlyMixin
 public abstract class LegacyUnicodeBitmapsProviderMixin {
-    @Shadow protected abstract ResourceLocation getSheetLocation(int i);
+    @Shadow protected abstract ResourceLocation getSheetLocation(char i);
 
     @Shadow @Final private Map<ResourceLocation, NativeImage> textures;
     private final ResourceLocation[] glyphLocations = new ResourceLocation[256];
 
     private ResourceLocation currentCharIdx;
 
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/font/providers/LegacyUnicodeBitmapsProvider;getSheetLocation(I)Lnet/minecraft/resources/ResourceLocation;"))
-    private ResourceLocation storeCurrentCharIdx(LegacyUnicodeBitmapsProvider provider, int i) {
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/font/providers/LegacyUnicodeBitmapsProvider;getSheetLocation(C)Lnet/minecraft/resources/ResourceLocation;"))
+    private ResourceLocation storeCurrentCharIdx(LegacyUnicodeBitmapsProvider provider, char i) {
         ResourceLocation location = getSheetLocation(i);
         currentCharIdx = location;
         return location;
@@ -56,15 +56,15 @@ public abstract class LegacyUnicodeBitmapsProviderMixin {
     }
 
     @Inject(method = "getSheetLocation", at = @At("HEAD"), cancellable = true)
-    private void useCachedLocation(int idx, CallbackInfoReturnable<ResourceLocation> cir) {
-        int cachedIdx = idx / 256;
+    private void useCachedLocation(char idx, CallbackInfoReturnable<ResourceLocation> cir) {
+        char cachedIdx = (char)(idx / 256);
         if(cachedIdx >= 0 && cachedIdx < glyphLocations.length && glyphLocations[cachedIdx] != null)
             cir.setReturnValue(glyphLocations[cachedIdx]);
     }
 
     @Inject(method = "getSheetLocation", at = @At("RETURN"))
-    private void saveCachedLocation(int idx, CallbackInfoReturnable<ResourceLocation> cir) {
-        int cachedIdx = idx / 256;
+    private void saveCachedLocation(char idx, CallbackInfoReturnable<ResourceLocation> cir) {
+        char cachedIdx = (char)(idx / 256);
         if(cachedIdx >= 0 && cachedIdx < glyphLocations.length)
             glyphLocations[cachedIdx] = cir.getReturnValue();
     }

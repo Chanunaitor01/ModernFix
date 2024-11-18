@@ -1,7 +1,5 @@
 package org.embeddedt.modernfix.forge.load;
 
-import net.minecraftforge.fml.ModWorkManager;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +38,7 @@ public class ModWorkManagerQueue extends ConcurrentLinkedDeque<Runnable> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void replace() {
+        /*
         try {
             Class<?> syncExecutorClass = Class.forName("net.minecraftforge.fml.ModWorkManager$SyncExecutor");
             ConcurrentLinkedDeque<Runnable> taskQueue = (ConcurrentLinkedDeque<Runnable>)ObfuscationReflectionHelper.getPrivateValue((Class)syncExecutorClass, (Object)ModWorkManager.syncExecutor(), "tasks");
@@ -54,5 +53,7 @@ public class ModWorkManagerQueue extends ConcurrentLinkedDeque<Runnable> {
         } catch(ReflectiveOperationException e) {
             e.printStackTrace();
         }
+
+         */
     }
 }

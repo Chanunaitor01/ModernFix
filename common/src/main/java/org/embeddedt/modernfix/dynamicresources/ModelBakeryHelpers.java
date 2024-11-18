@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.Pack;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.FallbackResourceManager;
 import net.minecraft.server.packs.resources.Resource;
@@ -90,8 +90,8 @@ public class ModelBakeryHelpers {
         return parser.parse(jsonReader);
     }
 
-    private static void gatherAdditionalViaManualScan(List<PackResources> untrustedPacks, Set<ResourceLocation> knownLocations,
-                                               Collection<ResourceLocation> uncertainLocations, String filePrefix) {
+    private static void gatherAdditionalViaManualScan(List<Pack> untrustedPacks, Set<ResourceLocation> knownLocations,
+                                                      Collection<ResourceLocation> uncertainLocations, String filePrefix) {
         if(untrustedPacks.size() > 0) {
             /* Now make a fallback resource manager and use it on the remaining packs to see if they actually contain these files */
             FallbackResourceManager frm = new FallbackResourceManager(PackType.CLIENT_RESOURCES, "dummy");
@@ -126,10 +126,10 @@ public class ModelBakeryHelpers {
      * main list contained inside the parent resource manager, so we need to scan each of the namespaced managers as
      * well.
      */
-    private static void checkFallbacks(SimpleReloadableResourceManager manager, List<PackResources> resourcePackList) {
-        ReferenceSet<PackResources> knownPacks = new ReferenceOpenHashSet<>(resourcePackList);
+    private static void checkFallbacks(SimpleReloadableResourceManager manager, List<Pack> resourcePackList) {
+        ReferenceSet<Pack> knownPacks = new ReferenceOpenHashSet<>(resourcePackList);
         Map<String, FallbackResourceManager> namespacedMap = manager.namespacedPacks;
-        namespacedMap.values().stream().flatMap(FallbackResourceManager::listPacks).forEach(pack -> {
+        namespacedMap.values().stream().flatMap(m -> getAllPacks(m).stream()).forEach(pack -> {
             if(knownPacks.add(pack)) {
                 /* the pack was not previously known, add to our list */
                 ModernFix.LOGGER.debug("Injecting unlisted pack '{}': {}", pack.getName(), pack.getClass().getName());
@@ -138,7 +138,17 @@ public class ModelBakeryHelpers {
         });
     }
 
-    public static void gatherModelMaterials(ResourceManager manager, Predicate<PackResources> isTrustedPack,
+    private static List<Pack> getAllPacks(ResourceManager manager) {
+        if (manager instanceof FallbackResourceManager) {
+            return ((FallbackResourceManager)manager).fallbacks;
+        } else if (manager instanceof SimpleReloadableResourceManager) {
+            return ((SimpleReloadableResourceManager)manager).namespacedPacks.values().stream().flatMap(m -> m.fallbacks.stream()).distinct().collect(Collectors.toList());
+        } else {
+            return ImmutableList.of();
+        }
+    }
+
+    public static void gatherModelMaterials(ResourceManager manager, Predicate<Pack> isTrustedPack,
                                             Set<Material> materialSet, Set<ResourceLocation> blockStateFiles,
                                             Set<ResourceLocation> modelFiles, UnbakedModel missingModel,
                                             Function<JsonElement, BlockModel> modelDeserializer,
@@ -151,19 +161,19 @@ public class ModelBakeryHelpers {
          * First, gather all vanilla packs, and use listResources on them. This will allow us to (hopefully) avoid
          * scanning most packs a lot.
          */
-        List<PackResources> allPackResources = new ArrayList<>(manager.listPacks().collect(Collectors.toList()));
+        List<Pack> allPack = new ArrayList<>(getAllPacks(manager));
         if(manager instanceof SimpleReloadableResourceManager) {
-            checkFallbacks((SimpleReloadableResourceManager)manager, allPackResources);
+            checkFallbacks((SimpleReloadableResourceManager)manager, allPack);
         }
-        Collections.reverse(allPackResources);
+        Collections.reverse(allPack);
         ObjectOpenHashSet<ResourceLocation> allAvailableModels = new ObjectOpenHashSet<>(), allAvailableStates = new ObjectOpenHashSet<>();
         /* try to fix CME in some runtime packs by forcing generation */
-        for(PackResources pack : allPackResources) {
+        for(Pack pack : allPack) {
             try(InputStream stream = pack.getResource(PackType.CLIENT_RESOURCES, new ResourceLocation("modernfix", "dummy.json"))) {
             } catch(Exception ignored) {
             }
         }
-        allPackResources.removeIf(pack -> {
+        allPack.removeIf(pack -> {
             for(String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
                 Collection<ResourceLocation> allBlockstates = pack.getResources(PackType.CLIENT_RESOURCES, namespace, "blockstates", Integer.MAX_VALUE, p -> p.endsWith(".json"));
                 for(ResourceLocation blockstate : allBlockstates) {
@@ -181,7 +191,7 @@ public class ModelBakeryHelpers {
             return true;
         });
 
-        gatherAdditionalViaManualScan(allPackResources, allAvailableStates, blockStateFiles, "blockstates/");
+        gatherAdditionalViaManualScan(allPack, allAvailableStates, blockStateFiles, "blockstates/");
         // We now have a list of all blockstates known to exist. Delete anything that we don't have
         blockStateFiles.retainAll(allAvailableStates);
         allAvailableStates.clear();
@@ -275,7 +285,7 @@ public class ModelBakeryHelpers {
 
         modelFiles.addAll(allAvailableModels);
         /* figure out which models we should actually load */
-        gatherAdditionalViaManualScan(allPackResources, allAvailableModels, modelFiles, "models/");
+        gatherAdditionalViaManualScan(allPack, allAvailableModels, modelFiles, "models/");
         modelFiles.retainAll(allAvailableModels);
         allAvailableModels.clear();
         allAvailableModels.trim();

@@ -17,8 +17,8 @@ public class PacketHandler {
     public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(ModernFix.MODID, "main"),
             () -> PROTOCOL_VERSION,
-            NetworkRegistry.acceptMissingOr(PROTOCOL_VERSION),
-            NetworkRegistry.acceptMissingOr(PROTOCOL_VERSION)
+            v -> v.equals(PROTOCOL_VERSION) || v.equals(NetworkRegistry.ABSENT) || v.equals(NetworkRegistry.ACCEPTVANILLA),
+            v -> v.equals(PROTOCOL_VERSION) || v.equals(NetworkRegistry.ABSENT) || v.equals(NetworkRegistry.ACCEPTVANILLA)
     );
 
     public static void register() {

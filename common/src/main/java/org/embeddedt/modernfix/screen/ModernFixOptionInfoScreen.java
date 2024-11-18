@@ -1,14 +1,11 @@
 package org.embeddedt.modernfix.screen;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.util.FormattedCharSequence;
 
 public class ModernFixOptionInfoScreen extends Screen {
     private final Screen lastScreen;
@@ -24,7 +21,7 @@ public class ModernFixOptionInfoScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        this.addButton(new Button(this.width / 2 - 100, this.height - 29, 200, 20, CommonComponents.GUI_DONE, (button) -> {
+        this.addButton(new Button(this.width / 2 - 100, this.height - 29, 200, 20, "Done", (button) -> {
             this.onClose();
         }));
     }
@@ -34,18 +31,18 @@ public class ModernFixOptionInfoScreen extends Screen {
         this.minecraft.setScreen(lastScreen);
     }
 
-    private void drawMultilineString(PoseStack mStack, Font fr, Component str, int x, int y) {
-        for(FormattedCharSequence s : fr.split(str, this.width - 50)) {
-            fr.drawShadow(mStack, s, (float)x, (float)y, 16777215);
+    private void drawMultilineString(Font fr, Component str, int x, int y) {
+        for(String s : fr.split(str.getString(), this.width - 50)) {
+            fr.drawShadow(s, (float)x, (float)y, 16777215);
             y += fr.lineHeight;
         }
     }
 
     @Override
-    public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(poseStack);
-        drawCenteredString(poseStack, this.font, this.title, this.width / 2, 8, 16777215);
-        this.drawMultilineString(poseStack, this.minecraft.font, description, 10, 50);
-        super.render(poseStack, mouseX, mouseY, partialTicks);
+    public void render(int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground();
+        drawCenteredString(this.font, this.title.getString(), this.width / 2, 8, 16777215);
+        this.drawMultilineString(this.minecraft.font, description, 10, 50);
+        super.render(mouseX, mouseY, partialTicks);
     }
 }

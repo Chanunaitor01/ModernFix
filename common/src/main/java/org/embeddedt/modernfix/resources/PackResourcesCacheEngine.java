@@ -95,7 +95,7 @@ public class PackResourcesCacheEngine {
         if(str.length() == 0)
             return false;
         for(int i = 0; i < str.length(); i++) {
-            if(!ResourceLocation.validPathChar(str.charAt(i))) {
+            if(!ResourceLocation.isAllowedInResourceLocation(str.charAt(i))) {
                 return false;
             }
         }

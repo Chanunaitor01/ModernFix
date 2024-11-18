@@ -41,7 +41,7 @@
     "modernfix-common.mixins.json"
   ],
   "depends": {
-    "minecraft": ">=1.16.2"
+    "minecraft": "1.15.2"
   },
   "breaks": {
     "dashloader": "*"

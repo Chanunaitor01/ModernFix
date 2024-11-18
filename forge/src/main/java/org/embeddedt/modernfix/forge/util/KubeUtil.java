@@ -6,8 +6,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.Tag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 
 import java.util.*;
 
@@ -19,7 +19,7 @@ public class KubeUtil {
     public static Map<Tag<Item>, Set<ItemStackJS>> tagItemCache = Collections.synchronizedMap(new WeakHashMap<>());
 
     @SubscribeEvent
-    public static void clearRegexCache(AddReloadListenerEvent event) {
+    public static void clearRegexCache(FMLServerAboutToStartEvent event) {
         matchedIdsForRegex.clear();
         ingredientItemCache.clear();
         tagItemCache.clear();

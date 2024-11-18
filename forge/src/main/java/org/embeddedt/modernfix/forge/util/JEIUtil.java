@@ -1,8 +1,6 @@
 package org.embeddedt.modernfix.forge.util;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -22,7 +20,7 @@ public class JEIUtil {
     public static void renderLoad(GuiScreenEvent.DrawScreenEvent.Post event) {
         /* Don't show the JEI indicator on the level loading screen, that looks weird */
         if(isLoading.get()) {
-            Gui.drawString(new PoseStack(), Minecraft.getInstance().font, new TranslatableComponent("modernfix.jei_load"), 0, 0, 0xffffff);
+            Minecraft.getInstance().font.drawShadow(new TranslatableComponent("modernfix.jei_load").getString(), 0, 0, 0xffffff);
         }
     }
 }

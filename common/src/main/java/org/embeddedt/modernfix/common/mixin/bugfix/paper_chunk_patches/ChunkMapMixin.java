@@ -1,6 +1,5 @@
 package org.embeddedt.modernfix.common.mixin.bugfix.paper_chunk_patches;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;
@@ -29,9 +28,8 @@ public class ChunkMapMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void setup(CallbackInfo ci) {
-        MinecraftServer server = this.level.getServer();
         this.mainInvokingExecutor = (runnable) -> {
-            if(server.isSameThread())
+            if(this.level.getServer().isSameThread())
                 runnable.run();
             else
                 this.mainThreadExecutor.execute(runnable);

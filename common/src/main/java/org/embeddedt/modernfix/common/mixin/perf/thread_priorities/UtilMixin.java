@@ -10,7 +10,7 @@ import java.util.concurrent.ForkJoinWorkerThread;
 
 @Mixin(Util.class)
 public class UtilMixin {
-    @ModifyArg(method = "makeExecutor", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/ForkJoinPool;<init>(ILjava/util/concurrent/ForkJoinPool$ForkJoinWorkerThreadFactory;Ljava/lang/Thread$UncaughtExceptionHandler;Z)V"), index = 1)
+    @ModifyArg(method = "makeBackgroundExecutor", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/ForkJoinPool;<init>(ILjava/util/concurrent/ForkJoinPool$ForkJoinWorkerThreadFactory;Ljava/lang/Thread$UncaughtExceptionHandler;Z)V"), index = 1)
     private static ForkJoinPool.ForkJoinWorkerThreadFactory adjustPriorityOfThreadFactory(ForkJoinPool.ForkJoinWorkerThreadFactory factory) {
         return pool -> {
             ForkJoinWorkerThread thread = factory.newThread(pool);

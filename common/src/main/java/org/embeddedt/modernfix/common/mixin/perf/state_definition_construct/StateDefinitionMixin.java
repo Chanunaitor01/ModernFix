@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Mixin(StateDefinition.class)
 @RequiresMod("ferritecore")
-public class StateDefinitionMixin<O, S extends StateHolder<O, S>> {
+public class StateDefinitionMixin<O, S extends StateHolder<S>> {
     @Shadow @Final private ImmutableSortedMap<String, Property<?>> propertiesByName;
 
     @ModifyVariable(method = "<init>", at = @At(value = "STORE", ordinal = 0), ordinal = 1, index = 8)

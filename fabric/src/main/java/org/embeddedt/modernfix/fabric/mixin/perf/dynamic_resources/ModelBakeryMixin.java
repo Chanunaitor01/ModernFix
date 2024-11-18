@@ -20,10 +20,10 @@ import net.minecraft.client.resources.ClientPackSource;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.FilePackResources;
-import net.minecraft.server.packs.FolderPackResources;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.VanillaPackResources;
+import net.minecraft.server.packs.FileResourcePack;
+import net.minecraft.server.packs.FolderResourcePack;
+import net.minecraft.server.packs.Pack;
+import net.minecraft.server.packs.VanillaPack;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.Block;
@@ -231,11 +231,11 @@ public abstract class ModelBakeryMixin implements IExtendedModelBakery {
         }
     }
 
-    private boolean trustedResourcePack(PackResources pack) {
-        return pack instanceof VanillaPackResources ||
+    private boolean trustedResourcePack(Pack pack) {
+        return pack instanceof VanillaPack ||
                 pack instanceof ClientPackSource ||
-                pack instanceof FolderPackResources ||
-                pack instanceof FilePackResources;
+                pack instanceof FolderResourcePack ||
+                pack instanceof FileResourcePack;
     }
 
     /**

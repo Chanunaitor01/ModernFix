@@ -47,7 +47,7 @@ public class ModernFixClientForge {
         ClientRegistry.registerKeyBinding(configKey);
         if(ModernFixMixinPlugin.instance.isOptionEnabled("perf.dynamic_resources.ConnectednessCheck")
             && ModList.get().isLoaded("connectedness")) {
-            event.enqueueWork(() -> {
+            DeferredWorkQueue.runLater(() -> {
                 ModLoader.get().addWarning(new ModLoadingWarning(ModLoadingContext.get().getActiveContainer().getModInfo(), ModLoadingStage.SIDED_SETUP, "modernfix.connectedness_dynresoruces"));
             });
         }

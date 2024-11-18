@@ -12,7 +12,7 @@ import java.util.List;
 public class StrongholdLocationCache extends SavedData {
     private List<ChunkPos> chunkPosList;
     public StrongholdLocationCache(ServerLevel level) {
-        super(getFileId(level.dimensionType()));
+        super(getFileId(level.dimension.getType()));
         chunkPosList = new ArrayList<>();
     }
 

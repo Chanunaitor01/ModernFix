@@ -28,7 +28,7 @@ public class ModernFixCommands {
                                 return 0;
                             }
 
-                            ResourceManager manager = level.getServer().resources.getResourceManager();
+                            ResourceManager manager = level.getServer().getResources();
                             Collection<ResourceLocation> structures = manager.listResources("structures", p -> p.endsWith(".nbt"));
                             int upgradedNum = 0;
                             Pattern pathPattern = Pattern.compile("^structures/(.*)\\.nbt$");

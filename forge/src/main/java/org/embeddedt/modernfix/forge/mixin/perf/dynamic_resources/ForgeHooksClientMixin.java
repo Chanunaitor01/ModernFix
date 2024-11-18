@@ -27,8 +27,6 @@ public class ForgeHooksClientMixin {
      */
     @Redirect(method = "onModelBake", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/ModLoader;postEvent(Lnet/minecraftforge/eventbus/api/Event;)V"), remap = false)
     private static void postNamespacedKeySetEvent(ModLoader loader, Event event) {
-        if(!ModLoader.isLoadingStateValid())
-            return;
         ModelBakeEvent bakeEvent = ((ModelBakeEvent)event);
         ModelBakeEventHelper helper = new ModelBakeEventHelper(bakeEvent.getModelRegistry());
         Method acceptEv = ObfuscationReflectionHelper.findMethod(ModContainer.class, "acceptEvent", Event.class);

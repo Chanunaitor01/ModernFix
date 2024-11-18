@@ -2,7 +2,6 @@ package org.embeddedt.modernfix.screen;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -25,18 +24,18 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
 
     private static final int DEPTH_OFFSET = 20;
 
-    private static final Component OPTION_ON = new TranslatableComponent("modernfix.option.on").withStyle(style -> style.withColor(ChatFormatting.GREEN));
-    private static final Component OPTION_OFF = new TranslatableComponent("modernfix.option.off").withStyle(style -> style.withColor(ChatFormatting.RED));
+    private static final Component OPTION_ON = new TranslatableComponent("modernfix.option.on").withStyle(style -> style.setColor(ChatFormatting.GREEN));
+    private static final Component OPTION_OFF = new TranslatableComponent("modernfix.option.off").withStyle(style -> style.setColor(ChatFormatting.RED));
 
     private static final Set<String> OPTIONS_MISSING_HELP = new HashSet<>();
 
     private ModernFixConfigScreen mainScreen;
 
-    private static MutableComponent getOptionComponent(Option option) {
+    private static BaseComponent getOptionComponent(Option option) {
         String friendlyKey = "modernfix.option.name." + option.getName();
         TextComponent baseComponent = new TextComponent(option.getSelfName());
         if(I18n.exists(friendlyKey))
-            return new TranslatableComponent(friendlyKey).withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, baseComponent)));
+            return new TranslatableComponent(friendlyKey);
         else
             return baseComponent;
     }
@@ -53,7 +52,7 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
 
     private void addOption(Option option) {
         if(addedOptions.add(option)) {
-            int w = this.minecraft.font.width(getOptionComponent(option)) + DEPTH_OFFSET * option.getDepth();
+            int w = this.minecraft.font.width(getOptionComponent(option).getString()) + DEPTH_OFFSET * option.getDepth();
             this.maxNameWidth = Math.max(w, this.maxNameWidth);
             this.addEntry(new OptionEntry(option.getName(), option));
             ModernFixMixinPlugin.instance.config.getOptionMap().values().stream()
@@ -73,7 +72,6 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
         for(String category : theCategories) {
             String categoryTranslationKey = "modernfix.option.category." + category;
             this.addEntry(new CategoryEntry(new TranslatableComponent(categoryTranslationKey)
-                    .withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TranslatableComponent(categoryTranslationKey + ".description"))))
             ));
             optionsByCategory.get(category).stream().filter(key -> {
                 int dotCount = 0;
@@ -100,16 +98,14 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
 
         public CategoryEntry(Component component) {
             this.name = component;
-            this.width = OptionList.this.minecraft.font.width(this.name);
+            this.width = OptionList.this.minecraft.font.width(this.name.getString());
         }
 
-        public void render(PoseStack matrixStack, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
+        public void render(int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
             Font var10000 = OptionList.this.minecraft.font;
             float x = (float)(OptionList.this.minecraft.screen.width / 2 - this.width / 2);
             int y = top + height - 10;
-            var10000.draw(matrixStack, this.name, x, y, 16777215);
-            if(mouseX >= x && mouseY >= y && mouseX <= (x + this.width) && mouseY <= (y + OptionList.this.minecraft.font.lineHeight))
-                OptionList.this.mainScreen.renderComponentHoverEffect(matrixStack, this.name.getStyle(), mouseX, mouseY);
+            var10000.draw(this.name.getString(), x, y, 16777215);
         }
 
         public boolean changeFocus(boolean focus) {
@@ -131,7 +127,7 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
         public OptionEntry(String optionName, Option option) {
             this.name = optionName;
             this.option = option;
-            this.toggleButton = new Button(0, 0, 55, 20, new TextComponent(""), (arg) -> {
+            this.toggleButton = new Button(0, 0, 55, 20, new TextComponent("").toString(), (arg) -> {
                 this.option.setEnabled(!this.option.isEnabled(), !this.option.isUserDefined());
                 try {
                     ModernFixMixinPlugin.instance.config.save();
@@ -144,20 +140,9 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
                     ModernFix.LOGGER.error("Unable to save config", e);
                 }
                 OptionList.this.updateOptionEntryStatuses();
-            }, (btn, gfx, x, y) -> {
-                if(this.option.isModDefined()) {
-                    String disablingMods = String.join(", ", this.option.getDefiningMods());
-                    OptionList.this.mainScreen.renderTooltip(
-                            gfx,
-                            new TranslatableComponent("modernfix.option." + (this.option.isEnabled() ? "enabled" : "disabled"))
-                                    .append(new TranslatableComponent("modernfix.option.mod_override", disablingMods)),
-                            x,
-                            y
-                    );
-                }
             });
             updateStatus();
-            this.helpButton = new Button(75, 0, 20, 20, new TextComponent("?"), (arg) -> {
+            this.helpButton = new Button(75, 0, 20, 20, new TextComponent("?").getString(), (arg) -> {
                 mainScreen.setLastScrollAmount(getScrollAmount());
                 Minecraft.getInstance().setScreen(new ModernFixOptionInfoScreen(mainScreen, optionName));
             });
@@ -173,22 +158,20 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
         }
 
         @Override
-        public void render(PoseStack matrixStack, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
-            MutableComponent nameComponent = getOptionComponent(option);
+        public void render(int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
+            BaseComponent nameComponent = getOptionComponent(option);
             if(this.option.isUserDefined())
-                nameComponent = nameComponent.withStyle(style -> style.withItalic(true)).append(new TranslatableComponent("modernfix.config.not_default"));
+                nameComponent = (BaseComponent) nameComponent.withStyle(style -> style.setItalic(true)).append(new TranslatableComponent("modernfix.config.not_default"));
             float textX = (float)(left + DEPTH_OFFSET * option.getDepth() + 160 - OptionList.this.maxNameWidth);
             float textY = (float)(top + height / 2 - 4);
-            OptionList.this.minecraft.font.draw(matrixStack, nameComponent, textX, textY, 16777215);
+            OptionList.this.minecraft.font.draw(nameComponent.getString(), textX, textY, 16777215);
             this.toggleButton.x = left + 175;
             this.toggleButton.y = top;
-            this.toggleButton.setMessage(getOptionMessage(this.option));
-            this.toggleButton.render(matrixStack, mouseX, mouseY, partialTicks);
+            this.toggleButton.setMessage(getOptionMessage(this.option).getString());
+            this.toggleButton.render(mouseX, mouseY, partialTicks);
             this.helpButton.x = left + 175 + 55;
             this.helpButton.y = top;
-            this.helpButton.render(matrixStack, mouseX, mouseY, partialTicks);
-            if(mouseX >= textX && mouseY >= textY && mouseX <= (textX + OptionList.this.maxNameWidth) && mouseY <= (textY + OptionList.this.minecraft.font.lineHeight))
-                OptionList.this.mainScreen.renderComponentHoverEffect(matrixStack, nameComponent.getStyle(), mouseX, mouseY);
+            this.helpButton.render(mouseX, mouseY, partialTicks);
         }
 
         private Component getOptionMessage(Option option) {

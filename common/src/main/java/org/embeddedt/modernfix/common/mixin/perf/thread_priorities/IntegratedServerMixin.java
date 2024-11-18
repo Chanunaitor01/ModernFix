@@ -2,27 +2,32 @@ package org.embeddedt.modernfix.common.mixin.perf.thread_priorities;
 
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
-import net.minecraft.client.Minecraft;
-import net.minecraft.server.ServerResources;
-import net.minecraft.server.packs.repository.PackRepository;
+import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
+import com.mojang.datafixers.DataFixer;
 import net.minecraft.client.server.IntegratedServer;
-import net.minecraft.server.players.GameProfileCache;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.progress.ChunkProgressListenerFactory;
-import net.minecraft.world.level.storage.WorldData;
-import net.minecraft.world.level.storage.LevelStorageSource;
+import net.minecraft.server.players.GameProfileCache;
 import org.embeddedt.modernfix.annotation.ClientOnlyMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.io.File;
+import java.net.Proxy;
+
 @Mixin(IntegratedServer.class)
 @ClientOnlyMixin
-public class IntegratedServerMixin {
+public abstract class IntegratedServerMixin extends MinecraftServer {
+    public IntegratedServerMixin(File file, Proxy proxy, DataFixer dataFixer, Commands commands, YggdrasilAuthenticationService yggdrasilAuthenticationService, MinecraftSessionService minecraftSessionService, GameProfileRepository gameProfileRepository, GameProfileCache gameProfileCache, ChunkProgressListenerFactory chunkProgressListenerFactory, String string) {
+        super(file, proxy, dataFixer, commands, yggdrasilAuthenticationService, minecraftSessionService, gameProfileRepository, gameProfileCache, chunkProgressListenerFactory, string);
+    }
+
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void adjustServerPriority(Thread pServerThread, Minecraft pMinecraft, RegistryAccess.RegistryHolder pRegistryHolder, LevelStorageSource.LevelStorageAccess pStorageSource, PackRepository pPackRepository, ServerResources pResources, WorldData pWorldData, MinecraftSessionService pSessionService, GameProfileRepository pProfileRepository, GameProfileCache pProfileCache, ChunkProgressListenerFactory pProgressListenerfactory, CallbackInfo ci) {
+    private void adjustServerPriority(CallbackInfo ci) {
         int pri = 4; //ModernFixConfig.INTEGRATED_SERVER_PRIORITY.get();
-        pServerThread.setPriority(pri);
+        this.serverThread.setPriority(pri);
     }
 }

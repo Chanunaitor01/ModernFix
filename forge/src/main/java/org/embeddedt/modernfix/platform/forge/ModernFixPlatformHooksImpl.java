@@ -7,7 +7,6 @@ import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.brigadier.CommandDispatcher;
 import cpw.mods.modlauncher.*;
-import cpw.mods.modlauncher.api.LamdbaExceptionUtils;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.commands.CommandSourceStack;
@@ -16,10 +15,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.fml.ModLoader;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.loading.LoadingModList;
@@ -29,7 +26,6 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.embeddedt.modernfix.core.ModernFixMixinPlugin;
 import org.embeddedt.modernfix.api.constants.IntegrationConstants;
 import org.embeddedt.modernfix.forge.classloading.FastAccessTransformerList;
-import org.embeddedt.modernfix.forge.classloading.ModernFixResourceFinder;
 import org.embeddedt.modernfix.forge.config.NightConfigFixer;
 import org.embeddedt.modernfix.forge.config.NightConfigWatchThrottler;
 import org.embeddedt.modernfix.forge.init.ModernFixForge;
@@ -50,15 +46,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class ModernFixPlatformHooksImpl implements ModernFixPlatformHooks {
     public boolean isClient() {
@@ -94,7 +85,7 @@ public class ModernFixPlatformHooksImpl implements ModernFixPlatformHooks {
     }
 
     public boolean isLoadingNormally() {
-        return isEarlyLoadingNormally() && ModLoader.isLoadingStateValid();
+        return isEarlyLoadingNormally();
     }
 
 
@@ -104,7 +95,7 @@ public class ModernFixPlatformHooksImpl implements ModernFixPlatformHooks {
                                                             int atlasWidth, int atlasHeight,
                                                             int spriteX, int spriteY, int mipmapLevel,
                                                             NativeImage image) {
-        TextureAtlasSprite tas = ForgeHooksClient.loadTextureAtlasSprite(atlasTexture, resourceManager, textureInfo, resource, atlasWidth, atlasHeight, spriteX, spriteY, mipmapLevel, image);
+        TextureAtlasSprite tas = null; // ForgeHooksClient.loadTextureAtlasSprite(atlasTexture, resourceManager, textureInfo, resource, atlasWidth, atlasHeight, spriteX, spriteY, mipmapLevel, image);
         if(tas == null) {
             tas = TASConstructor.construct(atlasTexture, resourceManager, textureInfo, resource, atlasWidth, atlasHeight, spriteX, spriteY, mipmapLevel, image);
         }
@@ -150,27 +141,6 @@ public class ModernFixPlatformHooksImpl implements ModernFixPlatformHooks {
 
     public void injectPlatformSpecificHacks() {
         /* We abuse the constructor of a mixin plugin as a safe location to start modifying the classloader */
-        /* Swap the transformer for ours */
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        if(!(loader instanceof TransformingClassLoader)) {
-            throw new IllegalStateException("Expected a TransformingClassLoader");
-        }
-        try {
-            if(ModernFixMixinPlugin.instance.isOptionEnabled("launch.class_search_cache.ModernFixResourceFinder")) {
-                Field resourceFinderField = TransformingClassLoader.class.getDeclaredField("resourceFinder");
-                /* Construct a new list of resource finders, using similar logic to ML */
-                resourceFinderField.setAccessible(true);
-                Function<String, Enumeration<URL>> resourceFinder = constructResourceFinder();
-                /* Merge with the findResources implementation provided by the DelegatedClassLoader */
-                Field dclField = TransformingClassLoader.class.getDeclaredField("delegatedClassLoader");
-                dclField.setAccessible(true);
-                URLClassLoader dcl = (URLClassLoader)dclField.get(loader);
-                resourceFinder = EnumerationHelper.mergeFunctors(resourceFinder, LamdbaExceptionUtils.rethrowFunction(dcl::findResources));
-                resourceFinderField.set(loader, resourceFinder);
-            }
-        } catch(RuntimeException | ReflectiveOperationException e) {
-            ModernFixMixinPlugin.instance.logger.error("Failed to make classloading changes", e);
-        }
 
         FastAccessTransformerList.attemptReplace();
 
@@ -209,32 +179,6 @@ public class ModernFixPlatformHooksImpl implements ModernFixPlatformHooks {
         return (Class<?>)defineClassMethod.invoke(systemLoader, className, newTransformerBytes, 0, newTransformerBytes.length);
     }
 
-    private static Function<String, Enumeration<URL>> constructResourceFinder() throws ReflectiveOperationException {
-        ModernFixResourceFinder.init();
-        Field servicesHandlerField = Launcher.class.getDeclaredField("transformationServicesHandler");
-        servicesHandlerField.setAccessible(true);
-        Object servicesHandler = servicesHandlerField.get(Launcher.INSTANCE);
-        Field serviceLookupField = servicesHandler.getClass().getDeclaredField("serviceLookup");
-        serviceLookupField.setAccessible(true);
-        Map<String, TransformationServiceDecorator> serviceLookup = (Map<String, TransformationServiceDecorator>)serviceLookupField.get(servicesHandler);
-        for(String s : new String[] { "classPrefixes", "resourceNames" }) {
-            // Reset cache fields to avoid class prefixes, etc. being falsely flagged
-            Field cacheField = TransformationServiceDecorator.class.getDeclaredField(s);
-            cacheField.setAccessible(true);
-            ((Set<String>)cacheField.get(null)).clear();
-        }
-        Method getClassLoaderMethod = TransformationServiceDecorator.class.getDeclaredMethod("getClassLoader");
-        getClassLoaderMethod.setAccessible(true);
-        Function<String, Enumeration<URL>> resourceEnumeratorLocator = ModernFixResourceFinder::findAllURLsForResource;
-        for(TransformationServiceDecorator decorator : serviceLookup.values()) {
-            Function<String, Optional<URL>> func = (Function<String, Optional<URL>>)getClassLoaderMethod.invoke(decorator);
-            if(func != null) {
-                resourceEnumeratorLocator = EnumerationHelper.mergeFunctors(resourceEnumeratorLocator, EnumerationHelper.fromOptional(func));
-            }
-        }
-        return resourceEnumeratorLocator;
-    }
-
     public void applyASMTransformers(String mixinClassName, ClassNode targetClass) {
         if(mixinClassName.equals("org.embeddedt.modernfix.forge.mixin.bugfix.chunk_deadlock.valhesia.BlockStateBaseMixin")) {
             // We need to destroy Valhelsia's callback so it can never run getBlockState
@@ -248,8 +192,8 @@ public class ModernFixPlatformHooksImpl implements ModernFixPlatformHooks {
     }
 
     public void onServerCommandRegister(Consumer<CommandDispatcher<CommandSourceStack>> handler) {
-        MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> {
-            handler.accept(event.getDispatcher());
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((FMLServerStartingEvent event) -> {
+            handler.accept(event.getCommandDispatcher());
         });
     }
 

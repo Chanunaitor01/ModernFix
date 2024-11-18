@@ -2,8 +2,8 @@ package org.embeddedt.modernfix.dfu;
 
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
+import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.schemas.Schema;
-import com.mojang.serialization.Dynamic;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

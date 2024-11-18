@@ -182,7 +182,7 @@ public class ModernFixEarlyConfig {
             .put("mixin.feature.spark_profile_launch", false)
             .put("mixin.perf.blast_search_trees", shouldReplaceSearchTrees)
             .put("mixin.devenv", isDevEnv)
-            .put("mixin.perf.remove_spawn_chunks", isDevEnv)
+            .put("mixin.perf.remove_spawn_chunks", false)
             .putConditionally(() -> !isFabric, "mixin.bugfix.fix_config_crashes", true)
             .putConditionally(() -> isFabric, "mixin.perf.clear_fabric_mapping_tables", false)
             .build();

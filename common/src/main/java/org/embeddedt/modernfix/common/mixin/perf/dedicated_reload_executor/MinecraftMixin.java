@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
 @Mixin(Minecraft.class)
 @ClientOnlyMixin
 public class MinecraftMixin {
-    @Redirect(method = { "<init>", "makeServerStem", "reloadResourcePacks" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/Util;backgroundExecutor()Ljava/util/concurrent/Executor;", ordinal = 0))
+    @Redirect(method = { "<init>", "reloadResourcePacks" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/Util;backgroundExecutor()Ljava/util/concurrent/Executor;", ordinal = 0))
     private Executor getResourceReloadExecutor() {
         return ModernFix.resourceReloadExecutor();
     }
