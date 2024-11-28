@@ -13,8 +13,7 @@ import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.async.SampleCollector;
 import me.lucko.spark.common.sampler.java.JavaSampler;
-import me.lucko.spark.common.sampler.node.MergeMode;
-import me.lucko.spark.common.util.MethodDisambiguator;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.lib.adventure.text.Component;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import net.minecraft.SharedConstants;
@@ -42,7 +41,7 @@ public class SparkLaunchProfiler {
     public static void start(String key) {
         if (!ongoingSamplers.containsKey(key)) {
             Sampler sampler;
-            SamplerSettings settings = new SamplerSettings(4000, ThreadDumper.ALL, ThreadGrouper.BY_NAME, -1, false);
+            SamplerSettings settings = new SamplerSettings(4000, ThreadDumper.ALL, ThreadGrouper.BY_NAME.get(), -1, false);
             try {
                 if(USE_JAVA_SAMPLER_FOR_LAUNCH) {
                     throw new UnsupportedOperationException();
@@ -71,7 +70,7 @@ public class SparkLaunchProfiler {
             SparkSamplerProtos.SamplerData output = sampler.toProto(platform, new Sampler.ExportProps()
                     .creator(new CommandSender.Data(commandSender.getName(), commandSender.getUniqueId()))
                     .comment("Stage: " + key)
-                    .mergeMode(() -> MergeMode.sameMethod(new MethodDisambiguator()))
+                    .mergeStrategy(MergeStrategy.SAME_METHOD)
                     .classSourceLookup(platform::createClassSourceLookup));
             try {
                 String urlKey = platform.getBytebinClient().postContent(output, "application/x-spark-sampler").key();
@@ -93,6 +92,11 @@ public class SparkLaunchProfiler {
         @Override
         public String getName() {
             return ModernFixPlatformHooks.INSTANCE.getPlatformName();
+        }
+
+        @Override
+        public String getBrand() {
+            return this.getName();
         }
 
         @Override
