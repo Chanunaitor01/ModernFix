@@ -15,7 +15,7 @@ trap cleanup EXIT
 
 echo "downloading temporary modernfix..."
 cd $WORK_DIR
-git clone https://github.com/embeddedt/ModernFix mfix &>/dev/null
+git clone git@github.com:embeddedt/ModernFix.git mfix &>/dev/null
 cd mfix
 
 # gather version list
