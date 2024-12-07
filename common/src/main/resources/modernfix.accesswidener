@@ -41,7 +41,6 @@ accessible class net/minecraft/server/level/ChunkMap$DistanceManager
 accessible class net/minecraft/client/resources/model/ModelBakery$BakedCacheKey
 accessible method net/minecraft/client/resources/model/ModelBakery$BakedCacheKey <init> (Lnet/minecraft/resources/ResourceLocation;Lcom/mojang/math/Transformation;Z)V
 accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl
-accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/ModelBakery$TextureGetter;Lnet/minecraft/client/resources/model/ModelResourceLocation;)V
 accessible class net/minecraft/client/resources/model/ModelManager$ReloadState
 accessible method net/minecraft/client/resources/model/BlockStateModelLoader definitionLocationToBlockMapper ()Ljava/util/function/Function;
 accessible method net/minecraft/client/resources/model/BlockStateModelLoader loadBlockStateDefinitionStack (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/world/level/block/state/StateDefinition;Ljava/util/List;Lnet/minecraft/client/resources/model/UnbakedModel;)Lnet/minecraft/client/resources/model/BlockStateModelLoader$LoadedModels;
