@@ -37,7 +37,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import org.embeddedt.modernfix.ModernFix;
-import org.embeddedt.modernfix.util.DynamicMap;
 
 import java.io.Reader;
 import java.util.ArrayList;
