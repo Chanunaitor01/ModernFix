@@ -56,7 +56,7 @@ public class RuntimeDatagen {
         Path path = Paths.get(RESOURCES_OUT_DIR);
         CompletableFuture<HolderLookup.Provider> lookupProvider = CompletableFuture.supplyAsync(VanillaRegistries::createLookup, Util.backgroundExecutor());
         GatherDataEvent.DataGeneratorConfig dataGeneratorConfig = new GatherDataEvent.DataGeneratorConfig(mods, path, Collections.emptyList(),
-                lookupProvider, true, true, true, true, true, mods.isEmpty() || IS_FLAT);
+                lookupProvider, true, true, true, true, null);
         if (!mods.contains("forge")) {
             //If we aren't generating data for forge, automatically add forge as an existing so mods can access forge's data
             existingMods.add("forge");
@@ -67,7 +67,8 @@ public class RuntimeDatagen {
         List<PackResources> oldPacks = new ArrayList<>(manager.listPacks().collect(Collectors.toList()));
         oldPacks.add(Minecraft.getInstance().getVanillaPackResources());
         ObfuscationReflectionHelper.setPrivateValue(ExistingFileHelper.class, existingFileHelper, new MultiPackResourceManager(PackType.CLIENT_RESOURCES, oldPacks), "clientResources");
-        ModLoader.runEventGenerator(mc->new GatherDataEvent(mc, dataGeneratorConfig.makeGenerator(p->dataGeneratorConfig.isFlat() ? p : p.resolve(mc.getModId()), dataGeneratorConfig.getMods().contains(mc.getModId())), dataGeneratorConfig, existingFileHelper));
+        ModLoader.runEventGenerator(mc->new GatherDataEvent.Client(mc, dataGeneratorConfig.makeGenerator(p->dataGeneratorConfig.isFlat() ? p : p.resolve(mc.getModId()), dataGeneratorConfig.getMods().contains(mc.getModId())), dataGeneratorConfig, existingFileHelper));
+        ModLoader.runEventGenerator(mc->new GatherDataEvent.Server(mc, dataGeneratorConfig.makeGenerator(p->dataGeneratorConfig.isFlat() ? p : p.resolve(mc.getModId()), dataGeneratorConfig.getMods().contains(mc.getModId())), dataGeneratorConfig, existingFileHelper));
         dataGeneratorConfig.runAll();
         ObfuscationReflectionHelper.setPrivateValue(DatagenModLoader.class, null, false, "runningDataGen");
         ModernFix.LOGGER.info("Finished runtime datagen.");

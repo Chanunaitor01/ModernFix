@@ -1,24 +1,13 @@
 package org.embeddedt.modernfix.neoforge.mixin.perf.dynamic_resources;
 
-import com.google.common.base.Stopwatch;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.neoforged.bus.api.Event;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModLoader;
-import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import org.embeddedt.modernfix.ModernFix;
-import org.embeddedt.modernfix.neoforge.dynresources.ModelBakeEventHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
-import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Mixin(ClientHooks.class)
 public class ForgeHooksClientMixin {
@@ -30,6 +19,7 @@ public class ForgeHooksClientMixin {
         if(ModLoader.hasErrors())
             return;
         ModelEvent.ModifyBakingResult bakeEvent = ((ModelEvent.ModifyBakingResult)event);
+        /*
         ModelBakeEventHelper helper = new ModelBakeEventHelper(bakeEvent.getModels());
         Method acceptEv = ObfuscationReflectionHelper.findMethod(ModContainer.class, "acceptEvent", Event.class);
         ModList.get().forEachModContainer((id, mc) -> {
@@ -46,5 +36,7 @@ public class ForgeHooksClientMixin {
                 ModernFix.LOGGER.warn("Mod '{}' took {} in the model bake event", id, timer);
             }
         });
+         */
+        ModernFix.LOGGER.warn("ModifyBakingResult support not reimplemented yet");
     }
 }
