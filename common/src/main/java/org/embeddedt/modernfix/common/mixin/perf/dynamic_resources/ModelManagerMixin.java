@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.AtlasSet;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.BlockStateModelLoader;
+import net.minecraft.client.resources.model.ClientItemInfoLoader;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.client.resources.model.UnbakedModel;
@@ -56,6 +57,11 @@ public class ModelManagerMixin implements DynamicModelProvider.ModelManagerExten
     @Overwrite
     private static Map<BlockState, BakedModel> createBlockStateToModelDispatch(Map<ModelResourceLocation, BakedModel> map, BakedModel bakedModel) {
         return Map.of();
+    }
+
+    @Redirect(method = "reload", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/ClientItemInfoLoader;scheduleLoad(Lnet/minecraft/server/packs/resources/ResourceManager;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
+    private CompletableFuture<ClientItemInfoLoader.LoadedClientInfos> disableClientItemEarlyLoad(ResourceManager resourceManager, Executor executor) {
+        return CompletableFuture.completedFuture(new ClientItemInfoLoader.LoadedClientInfos(Map.of()));
     }
 
     @ModifyArg(method = "reload", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;allOf([Ljava/util/concurrent/CompletableFuture;)Ljava/util/concurrent/CompletableFuture;", ordinal = 1))

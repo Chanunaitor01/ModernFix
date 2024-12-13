@@ -98,6 +98,8 @@ public class DynamicModelProvider {
     private final Map<ResourceLocation, ItemModel> itemStackModelOverrides = new ConcurrentHashMap<>();
     private final Map<ResourceLocation, BakedModel> standaloneModelOverrides = new ConcurrentHashMap<>();
 
+    private static final boolean DEBUG_DYNAMIC_MODEL_LOADING = Boolean.getBoolean("modernfix.debugDynamicModelLoading");
+
     public DynamicModelProvider(ResourceManager resourceManager, EntityModelSet entityModelSet,
                                 Map<ResourceLocation, AtlasSet.StitchResult> atlasMap) {
         this.unbakedMissingModel = MissingBlockModel.missingModel();
@@ -313,6 +315,9 @@ public class DynamicModelProvider {
         if(stateDefinition == null) {
             return Optional.empty();
         }
+        if (DEBUG_DYNAMIC_MODEL_LOADING) {
+            ModernFix.LOGGER.info("Loading blockstate definition '{}'", location);
+        }
         List<Resource> resources = resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(location.getNamespace(), "blockstates/" + location.getPath() + ".json"));
         List<BlockStateModelLoader.LoadedBlockModelDefinition> loadedDefinitions = new ArrayList<>(resources.size());
         for(Resource resource : resources) {
@@ -328,6 +333,9 @@ public class DynamicModelProvider {
     }
 
     private BakedModel bakeModel(UnbakedModel model, ModelDebugName name) {
+        if (DEBUG_DYNAMIC_MODEL_LOADING) {
+            ModernFix.LOGGER.info("Baking model '{}'", name.get());
+        }
         synchronized (this) {
             this.resolver.clearResolver();
             model.resolveDependencies(this.resolver);
@@ -337,6 +345,9 @@ public class DynamicModelProvider {
     }
 
     private BakedModel bakeModel(UnbakedBlockStateModel model, ModelDebugName name) {
+        if (DEBUG_DYNAMIC_MODEL_LOADING) {
+            ModernFix.LOGGER.info("Baking model '{}'", name.get());
+        }
         synchronized (this) {
             this.resolver.clearResolver();
             model.resolveDependencies(this.resolver);
@@ -379,6 +390,9 @@ public class DynamicModelProvider {
     }
 
     private Optional<UnbakedModel> loadBlockModel(ResourceLocation location) {
+        if (DEBUG_DYNAMIC_MODEL_LOADING) {
+            ModernFix.LOGGER.info("Loading block model '{}'", location);
+        }
         if (location.equals(ItemModelGenerator.GENERATED_ITEM_MODEL_ID)) {
             return Optional.of(this.itemModelGenerator);
         }
@@ -398,6 +412,9 @@ public class DynamicModelProvider {
     }
 
     private Optional<ClientItem> loadClientItemProperties(ResourceLocation location) {
+        if (DEBUG_DYNAMIC_MODEL_LOADING) {
+            ModernFix.LOGGER.info("Loading client item '{}'", location);
+        }
         var resource = this.resourceManager.getResource(ResourceLocation.fromNamespaceAndPath(location.getNamespace(), "items/" + location.getPath() + ".json"));
         if(resource.isPresent()) {
             try(Reader reader = resource.get().openAsReader()) {
@@ -414,6 +431,9 @@ public class DynamicModelProvider {
     }
 
     private Optional<ItemModel> loadItemModel(ResourceLocation location) {
+        if (DEBUG_DYNAMIC_MODEL_LOADING) {
+            ModernFix.LOGGER.info("Loading item model '{}'", location);
+        }
         var override = this.itemStackModelOverrides.get(location);
         if (override != null) {
             return Optional.of(override);
