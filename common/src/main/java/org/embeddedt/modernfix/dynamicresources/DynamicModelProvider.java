@@ -3,17 +3,21 @@ package org.embeddedt.modernfix.dynamicresources;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.BlockModelDefinition;
 import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.renderer.block.model.UnbakedBlockStateModel;
 import net.minecraft.client.renderer.item.ClientItem;
 import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.item.MissingItemModel;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.AtlasSet;
@@ -29,6 +33,7 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.client.resources.model.SpriteGetter;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -37,14 +42,23 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import org.embeddedt.modernfix.ModernFix;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Reader;
+import java.lang.ref.WeakReference;
+import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,69 +67,22 @@ import java.util.stream.Collectors;
  */
 public class DynamicModelProvider {
     private final LoadingCache<ResourceLocation, Optional<BlockStateModelLoader.LoadedModels>> loadedStateDefinitions =
-            CacheBuilder.newBuilder()
-                    .expireAfterAccess(3, TimeUnit.MINUTES)
-                    .maximumSize(1000)
-                    .concurrencyLevel(8)
-                    .softValues()
-                    .build(new CacheLoader<>() {
-                        @Override
-                        public Optional<BlockStateModelLoader.LoadedModels> load(ResourceLocation key) {
-                            return loadBlockStateDefinition(key);
-                        }
-                    });
+            this.makeLoadingCache(this::loadBlockStateDefinition);
 
     private final LoadingCache<ResourceLocation, Optional<UnbakedModel>> loadedBlockModels =
-            CacheBuilder.newBuilder()
-                    .expireAfterAccess(3, TimeUnit.MINUTES)
-                    .maximumSize(1000)
-                    .concurrencyLevel(8)
-                    .softValues()
-                    .build(new CacheLoader<>() {
-                        @Override
-                        public Optional<UnbakedModel> load(ResourceLocation key) {
-                            return loadBlockModel(key);
-                        }
-                    });
+            this.makeLoadingCache(this::loadBlockModel);
 
     private final LoadingCache<ModelResourceLocation, Optional<BakedModel>> loadedBakedModels =
-            CacheBuilder.newBuilder()
-                    .expireAfterAccess(3, TimeUnit.MINUTES)
-                    .maximumSize(1000)
-                    .concurrencyLevel(8)
-                    .softValues()
-                    .build(new CacheLoader<>() {
-                        @Override
-                        public Optional<BakedModel> load(ModelResourceLocation key) {
-                            return loadBakedModel(key);
-                        }
-                    });
+            this.makeLoadingCache(this::loadBakedModel);
 
     private final LoadingCache<ResourceLocation, Optional<ClientItem>> loadedClientItemProperties =
-            CacheBuilder.newBuilder()
-                    .expireAfterAccess(3, TimeUnit.MINUTES)
-                    .maximumSize(1000)
-                    .concurrencyLevel(8)
-                    .softValues()
-                    .build(new CacheLoader<>() {
-                        @Override
-                        public Optional<ClientItem> load(ResourceLocation key) {
-                            return loadClientItemProperties(key);
-                        }
-                    });
+            this.makeLoadingCache(this::loadClientItemProperties);
 
     private final LoadingCache<ResourceLocation, Optional<ItemModel>> loadedItemModels =
-            CacheBuilder.newBuilder()
-                    .expireAfterAccess(3, TimeUnit.MINUTES)
-                    .maximumSize(1000)
-                    .concurrencyLevel(8)
-                    .softValues()
-                    .build(new CacheLoader<>() {
-                        @Override
-                        public Optional<ItemModel> load(ResourceLocation key) {
-                            return loadItemModel(key);
-                        }
-                    });
+           this.makeLoadingCache(this::loadItemModel);
+
+    private final LoadingCache<ResourceLocation, Optional<BakedModel>> loadedStandaloneModels =
+            this.makeLoadingCache(this::loadStandaloneModel);
 
     private final BakedModel missingModel;
     private final ItemModel missingItemModel;
@@ -127,11 +94,13 @@ public class DynamicModelProvider {
     private final EntityModelSet entityModelSet;
     private final ItemModelGenerator itemModelGenerator;
 
-    public DynamicModelProvider(Map<ModelResourceLocation, BakedModel> initialBakedRegistry, BakedModel missingModel,
-                                ItemModel missingItemModel, ResourceManager resourceManager, EntityModelSet entityModelSet,
+    private final Map<ModelResourceLocation, BakedModel> mrlModelOverrides = new ConcurrentHashMap<>();
+    private final Map<ResourceLocation, ItemModel> itemStackModelOverrides = new ConcurrentHashMap<>();
+    private final Map<ResourceLocation, BakedModel> standaloneModelOverrides = new ConcurrentHashMap<>();
+
+    public DynamicModelProvider(ResourceManager resourceManager, EntityModelSet entityModelSet,
                                 Map<ResourceLocation, AtlasSet.StitchResult> atlasMap) {
-        this.missingModel = missingModel;
-        this.missingItemModel = missingItemModel;
+        this.unbakedMissingModel = MissingBlockModel.missingModel();
         this.entityModelSet = entityModelSet;
         var missing = atlasMap.get(TextureAtlas.LOCATION_BLOCKS).missing();
         this.textureGetter = new ModelBakery.TextureGetter() {
@@ -154,9 +123,189 @@ public class DynamicModelProvider {
         };
         this.stateMapper = BlockStateModelLoader.definitionLocationToBlockMapper();
         this.resourceManager = resourceManager;
-        this.unbakedMissingModel = MissingBlockModel.missingModel();
         this.resolver = new DynamicResolver();
         this.itemModelGenerator = new ItemModelGenerator();
+        this.missingModel = this.bakeModel(this.unbakedMissingModel, () -> "missing");
+        this.missingItemModel = new MissingItemModel(this.missingModel);
+    }
+
+    public BakedModel getMissingBakedModel() {
+        return this.missingModel;
+    }
+
+    public ItemModel getMissingItemModel() {
+        return this.missingItemModel;
+    }
+
+    public Map<ModelResourceLocation, BakedModel> getTopLevelEmulatedRegistry() {
+        Set<ModelResourceLocation> topLevelModelLocations = new HashSet<>();
+        // Skip going through ModelLocationCache because most of the accesses will be misses
+        BuiltInRegistries.BLOCK.entrySet().forEach(entry -> {
+            var location = entry.getKey().location();
+            for(BlockState state : entry.getValue().getStateDefinition().getPossibleStates()) {
+                topLevelModelLocations.add(BlockModelShaper.stateToModelLocation(location, state));
+            }
+        });
+        return new EmulatedRegistry<>(ModelResourceLocation.class, this.loadedBakedModels, topLevelModelLocations, this.mrlModelOverrides);
+    }
+
+    public Map<ResourceLocation, BakedModel> getStandaloneEmulatedRegistry() {
+        return new EmulatedRegistry<>(ResourceLocation.class, this.loadedStandaloneModels, Set.of(), this.standaloneModelOverrides);
+    }
+
+    public Map<ResourceLocation, ItemModel> getItemModelEmulatedRegistry() {
+        return new EmulatedRegistry<>(ResourceLocation.class, this.loadedItemModels, BuiltInRegistries.ITEM.keySet(), this.itemStackModelOverrides);
+    }
+
+    public Map<ResourceLocation, ClientItem.Properties> getItemPropertiesEmulatedRegistry() {
+        return Maps.transformValues(new EmulatedRegistry<>(ResourceLocation.class, this.loadedClientItemProperties, BuiltInRegistries.ITEM.keySet(), Map.of()), ClientItem::properties);
+    }
+
+    private <K, V> LoadingCache<K, Optional<V>> makeLoadingCache(Function<K, Optional<V>> loadingFunction) {
+        return CacheBuilder.newBuilder()
+                .expireAfterAccess(3, TimeUnit.MINUTES)
+                .maximumSize(1000)
+                .concurrencyLevel(8)
+                .softValues()
+                .build(new CacheLoader<>() {
+                    @Override
+                    public Optional<V> load(K key) {
+                        return loadingFunction.apply(key);
+                    }
+                });
+    }
+
+    private static class EmulatedRegistry<K, V> implements Map<K, V> {
+        private final LoadingCache<K, Optional<V>> realCache;
+        private final Set<K> keys;
+        private final Map<K, V> overrides;
+        private final Class<K> keyClass;
+
+        public EmulatedRegistry(Class<K> keyClass, LoadingCache<K, Optional<V>> realCache, Set<K> keys, Map<K, V> overrides) {
+            this.keyClass = keyClass;
+            this.realCache = realCache;
+            this.keys = Collections.unmodifiableSet(keys);
+            this.overrides = overrides;
+        }
+
+        @Override
+        public V get(Object key) {
+            if (this.keyClass.isAssignableFrom(key.getClass())) {
+                return this.realCache.getUnchecked((K)key).orElse(null);
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public V put(K key, V value) {
+            V oldValue = this.realCache.getUnchecked(key).orElse(null);
+            this.overrides.put(key, value);
+            this.realCache.invalidate(key);
+            return oldValue;
+        }
+
+        @Override
+        public V remove(Object key) {
+            this.overrides.remove(key);
+            this.realCache.invalidate(key);
+            return null;
+        }
+
+        @Override
+        public void putAll(@NotNull Map<? extends K, ? extends V> m) {
+            m.forEach(this::put);
+        }
+
+        @Override
+        public void clear() {
+            this.overrides.clear();
+            this.realCache.invalidateAll();
+        }
+
+        @Override
+        public @NotNull Set<K> keySet() {
+            return keys;
+        }
+
+        @Override
+        public @NotNull Collection<V> values() {
+            return List.of();
+        }
+
+        @Override
+        public int size() {
+            return keys.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return keys.contains(key);
+        }
+
+        @Override
+        public boolean containsValue(Object value) {
+            return false;
+        }
+
+        @Override
+        public @NotNull Set<Entry<K, V>> entrySet() {
+            return new AbstractSet<>() {
+                @Override
+                public Iterator<Entry<K, V>> iterator() {
+                    return Iterators.transform(keys.iterator(), key -> new Entry<>() {
+                        @Override
+                        public K getKey() {
+                            return key;
+                        }
+
+                        @Override
+                        public V getValue() {
+                            return get(key);
+                        }
+
+                        @Override
+                        public V setValue(V value) {
+                            return put(key, value);
+                        }
+                    });
+                }
+
+                @Override
+                public int size() {
+                    return keys.size();
+                }
+            };
+        }
+
+        @Override
+        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+            for(K location : keys) {
+                /*
+                 * Fetching every model is insanely slow. So we call the function with a null object first, since it
+                 * probably isn't expecting that. If we get an exception thrown, or it returns nonnull, then we know
+                 * it actually cares about the given model.
+                 */
+                boolean needsReplacement;
+                try {
+                    needsReplacement = function.apply(location, null) != null;
+                } catch(Throwable e) {
+                    needsReplacement = true;
+                }
+                if(needsReplacement) {
+                    V existing = get(location);
+                    V replacement = function.apply(location, existing);
+                    if(replacement != existing) {
+                        put(location, replacement);
+                    }
+                }
+            }
+        }
     }
 
     private Optional<BlockStateModelLoader.LoadedModels> loadBlockStateDefinition(ResourceLocation location) {
@@ -178,29 +327,31 @@ public class DynamicModelProvider {
         return Optional.of(BlockStateModelLoader.loadBlockStateDefinitionStack(location, stateDefinition, loadedDefinitions, this.unbakedMissingModel));
     }
 
-    private BakedModel bakeModel(UnbakedModel model, ModelResourceLocation location) {
+    private BakedModel bakeModel(UnbakedModel model, ModelDebugName name) {
         synchronized (this) {
             this.resolver.clearResolver();
             model.resolveDependencies(this.resolver);
-            var modelBaker = new DynamicBaker(location::toString);
+            var modelBaker = new DynamicBaker(name);
             return UnbakedModel.bakeWithTopModelValues(model, modelBaker, BlockModelRotation.X0_Y0);
         }
     }
 
-    private BakedModel bakeModel(UnbakedBlockStateModel model, ModelResourceLocation location) {
+    private BakedModel bakeModel(UnbakedBlockStateModel model, ModelDebugName name) {
         synchronized (this) {
             this.resolver.clearResolver();
             model.resolveDependencies(this.resolver);
-            var modelBaker = new DynamicBaker(location::toString);
+            var modelBaker = new DynamicBaker(name);
             return model.bake(modelBaker);
         }
     }
 
     private Optional<BakedModel> loadBakedModel(ModelResourceLocation location) {
+        var override = this.mrlModelOverrides.get(location);
+        if (override != null) {
+            return Optional.of(override);
+        }
         if (location.variant().equals("standalone") || location.variant().equals("fabric_resource")) {
-            return this.loadedBlockModels.getUnchecked(location.id()).map(unbakedModel -> {
-                return this.bakeModel(unbakedModel, location);
-            });
+            return this.loadStandaloneModel(location.id());
         } else {
             var optLoadedModels = this.loadedStateDefinitions.getUnchecked(location.id());
             Optional<UnbakedBlockStateModel> unbakedModelOpt = optLoadedModels.map(loadedModels -> {
@@ -212,9 +363,19 @@ public class DynamicModelProvider {
                 }
             });
             return unbakedModelOpt.map(unbakedModel -> {
-                return this.bakeModel(unbakedModel, location);
+                return this.bakeModel(unbakedModel, location::toString);
             });
         }
+    }
+
+    private Optional<BakedModel> loadStandaloneModel(ResourceLocation location) {
+        var override = this.standaloneModelOverrides.get(location);
+        if (override != null) {
+            return Optional.of(override);
+        }
+        return this.loadedBlockModels.getUnchecked(location).map(unbakedModel -> {
+            return this.bakeModel(unbakedModel, location::toString);
+        });
     }
 
     private Optional<UnbakedModel> loadBlockModel(ResourceLocation location) {
@@ -243,7 +404,7 @@ public class DynamicModelProvider {
                 ClientItem clientItem = ClientItem.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader)).getOrThrow();
                 return Optional.of(clientItem);
             } catch(Exception e) {
-                ModernFix.LOGGER.error("Failed to load block model {} from '{}'", location, resource.get().sourcePackId(), e);
+                ModernFix.LOGGER.error("Failed to load client item {} from '{}'", location, resource.get().sourcePackId(), e);
                 return Optional.empty();
             }
         } else {
@@ -253,6 +414,10 @@ public class DynamicModelProvider {
     }
 
     private Optional<ItemModel> loadItemModel(ResourceLocation location) {
+        var override = this.itemStackModelOverrides.get(location);
+        if (override != null) {
+            return Optional.of(override);
+        }
         return this.loadedClientItemProperties.getUnchecked(location).map(clientItem -> {
             var bakingContext = new ItemModel.BakingContext(new DynamicBaker(location::toString), this.entityModelSet, this.missingItemModel);
             return clientItem.model().bake(bakingContext);
@@ -269,6 +434,10 @@ public class DynamicModelProvider {
 
     public ItemModel getItemModel(ResourceLocation location) {
         return this.loadedItemModels.getUnchecked(location).orElse(this.missingItemModel);
+    }
+
+    public BakedModel getStandaloneModel(ResourceLocation location) {
+        return this.loadedStandaloneModels.getUnchecked(location).orElse(this.missingModel);
     }
 
     private class DynamicBaker implements ModelBaker {
@@ -330,5 +499,11 @@ public class DynamicModelProvider {
             this.stack.clear();
             this.resolvedModels.clear();
         }
+    }
+
+    public static WeakReference<DynamicModelProvider> currentReloadingModelProvider = new WeakReference<>(null);
+
+    public interface ModelManagerExtension {
+        DynamicModelProvider mfix$getModelProvider();
     }
 }
