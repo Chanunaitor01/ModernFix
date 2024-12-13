@@ -70,8 +70,6 @@ public class CachingStructureManager {
             hasher.reset();
             String hash = encodeHex(hasher.digest(structureBytes));
             CompoundTag cachedUpgraded = getCachedUpgraded(location, truncateHash(hash));
-            if(cachedUpgraded == null)
-                cachedUpgraded = getCachedUpgraded(location, hash); /* pick up old cache */
             if(cachedUpgraded != null && cachedUpgraded.getInt("DataVersion") == requiredMinimumDataVersion) {
                 ModernFix.LOGGER.debug("Using cached upgraded version of {}", location);
                 currentTag = cachedUpgraded;
