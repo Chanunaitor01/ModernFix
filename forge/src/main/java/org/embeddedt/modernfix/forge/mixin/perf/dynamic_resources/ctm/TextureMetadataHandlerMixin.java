@@ -20,7 +20,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.model.IModelCTM;
-import team.chisel.ctm.client.mixin.ModelBakerImplAccessor;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.ModelCTM;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
@@ -39,7 +38,7 @@ public abstract class TextureMetadataHandlerMixin implements ModernFixClientInte
 
     @Shadow(remap = false) @Nonnull protected abstract BakedModel wrap(UnbakedModel model, BakedModel object) throws IOException;
 
-    @Shadow(remap = false) @Final public static Multimap<ResourceLocation, Material> TEXTURES_SCRAPED;
+    @Shadow(remap = false) @Final private Multimap<ResourceLocation, Material> scrapedTextures;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void subscribeDynamic(CallbackInfo ci) {
@@ -70,7 +69,7 @@ public abstract class TextureMetadataHandlerMixin implements ModernFixClientInte
                     continue;
                 }
 
-                Collection<Material> textures = Sets.newHashSet(TEXTURES_SCRAPED.get(dep));
+                Collection<Material> textures = Sets.newHashSet(scrapedTextures.get(dep));
                 Collection<ResourceLocation> newDependencies = model.getDependencies();
                 for (Material tex : textures) {
                     IMetadataSectionCTM meta = null;
@@ -108,10 +107,12 @@ public abstract class TextureMetadataHandlerMixin implements ModernFixClientInte
             IModelCTM var10 = baked.getModel();
             if (var10 instanceof ModelCTM ctmModel) {
                 if (!ctmModel.isInitialized()) {
+                    // Clear the baked cache as upstream CTM does
+                    ((CTMModelBakeryAccessor)bakery).mfix$getBakedCache().clear();
                     Function<Material, TextureAtlasSprite> spriteGetter = (m) -> {
                         return Minecraft.getInstance().getModelManager().getAtlas(m.atlasLocation()).getSprite(m.texture());
                     };
-                    ModelBakery.ModelBakerImpl baker = ModelBakerImplAccessor.createImpl(bakery, ($, m) -> {
+                    ModelBakery.ModelBakerImpl baker = bakery.new ModelBakerImpl(($, m) -> {
                         return spriteGetter.apply(m);
                     }, key);
                     // bypass bakedCache so that dependent models get re-baked and thus retrieve their sprites again
