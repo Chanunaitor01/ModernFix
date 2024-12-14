@@ -121,4 +121,17 @@
   "modernfix.option.mixin.perf.dynamic_block_codecs": "Vermeidet das Speichern eines Codecs für jeden Block (Zustand) und generiert und speichert ihn stattdessen bei Bedarf im laufenden Betrieb. Im Allgemeinen lohnt es sich nicht, es zu aktivieren, es sei denn, Sie haben eine Million Blöcke/Elemente.",
   "modernfix.option.mixin.perf.faster_command_suggestions": "Verringern Sie Verzögerungen, wenn beim Eingeben eines Befehls Hunderttausende Vorschläge eingehen",
   "modernfix.option.mixin.perf.mojang_registry_size": "Behebt ein Problem, das dazu führt, dass sich die Registrierung von Blöcken/Elementen proportional zur bereits registrierten Anzahl verlangsamt. Dies verbessert die Startzeit."
+  "modernfix.option.mixin.perf.cache_profile_texture_url": "Vermeidet die sinnlose Erstellung eines URL-Objekts und beschleunigt das Rendern von Köpfen.",
+  "modernfix.option.mixin.bugfix.entity_pose_stack": "Behebt das Forge-Problem #9118, bei dem Mods unentschuldbare Render-Abstürze verursachen können, indem sie den Matrix-Stack verschieben, ohne ihn zu löschen.",
+  "modernfix.option.mixin.bugfix.file_dialog_title": "Behebt ein Sicherheitsproblem mit dem Dialog der Worldgen-Einstellungsdatei",
+  "modernfix.option.mixin.bugfix.forge_vehicle_packets": "Behebt einen Fehler, der durch einen Forge-Patch eingeführt wurde und dazu führte, dass übermäßige Mengen an Datenpaketen an den Spieler gesendet wurden, wenn er mit einem Fahrzeug auf einer Chunk-Grenze fährt.",
+  "modernfix.option.mixin.bugfix.mantle_model_cme": "Behebt einen Fehler in Mantle, der zu zufälligen ConcurrentModificationException-Abstürze beim Rendern von Tinkers Construct-Inhalten führen kann.",
+  "modernfix.option.mixin.bugfix.model_data_manager_cme": "Behebt Designfehler im Forge ModelDataManager-System, die unerwartete Gleichzeitigkeitsprobleme verursachen können.",
+  "modernfix.option.mixin.bugfix.recipe_book_type_desync": "Behebt, dass Forge-Clients nicht mehr verbunden werden, wenn sie sich mit einem Vanilla-Server verbinden, wenn Mods benutzerdefinierte Rezeptbucheinträge hinzufügen.",
+  "modernfix.option.mixin.bugfix.unsafe_modded_shape_caches": "Behebung verschiedener ConcurrentModificationExceptions, die in Content-Mods bei der Berechnung von Blockformen auftreten können",
+  "modernfix.option.mixin.feature.stalled_chunk_load_detection": "Diese Option kann dabei helfen, die Ursache für das Einfrieren von Chunkloading zu erkennen. Wenn die Option aktiviert bleibt, kann dies jedoch zu einer geringfügig schlechteren Leistung führen.",
+  "modernfix.option.mixin.perf.fix_loop_spin_waiting": "Behebt die in Minecraft eingebaute Wartefunktion, die übermäßig viele CPU-Ressourcen verbraucht.",
+  "modernfix.option.mixin.perf.forge_cap_retrieval": "Kleine Mikro-Optimierung, die das Abrufen von benutzerdefinierten Monster/Tiere in Forge etwas effizienter macht.",
+  "modernfix.option.mixin.perf.forge_registry_lambda": "Behebt Versäumnisse in Forge, die zu einer übermäßigen Zuweisung in Hot Registry-Methoden führen.",
+  "modernfix.option.mixin.bugfix.restore_old_dragon_movement": "Behebt MC-272431, durch den der Enddrache nicht mehr zum Portal tauchen kann, wie es in 1.13 und älter der Fall war. Dies führt dazu, dass der Drache ein wenig anders fliegt, als es moderne Spieler gewohnt sind. Außerdem wird das One-Cycling ausgebessert, sodass es nicht standardmäßig aktiviert ist. Vielen Dank an Jukitsu für den Hinweis auf die Regression im Vanilla-Code."
 }
