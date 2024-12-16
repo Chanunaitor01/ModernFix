@@ -145,6 +145,9 @@ public class DynamicBakedModelProvider implements Map<ResourceLocation, BakedMod
 
     @Override
     public BakedModel get(Object o) {
+        if (o == null) {
+            return null;
+        }
         BakedModel model = permanentOverrides.getOrDefault(o, SENTINEL);
         if(model != SENTINEL)
             return model;
